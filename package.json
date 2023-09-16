@@ -1,0 +1,23 @@
+{
+  "name": "@ahdg/koishi-plugin-api",
+  "description": "Expose an API with Koishi to make various requests.",
+  "version": "0.0.1",
+  "main": "lib/index.js",
+  "typings": "lib/index.d.ts",
+  "files": [
+    "lib",
+    "dist"
+  ],
+  "license": "MIT",
+  "keywords": [
+    "service",
+    "koishi",
+    "plugin"
+  ],
+  "peerDependencies": {
+    "koishi": "^4.14.3"
+  },
+  "dependencies": {
+    "hash-wasm": "^4.9.0"
+  }
+}
