@@ -66,7 +66,9 @@ export class API extends Service {
       ctx.body = "Good!";
     });
 
-    if (config.botsAPI.enabled) ctx.plugin(botsAPI, config.botsAPI);
+    if (config.botsAPI.enabled) {
+      ctx.plugin(botsAPI, config.botsAPI, config.path);
+    }
   }
 
   async start() {
