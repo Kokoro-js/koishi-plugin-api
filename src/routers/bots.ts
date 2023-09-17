@@ -1,5 +1,5 @@
-import { Bot, Context, Router, Schema } from "koishi";
-import typia, { TypeGuardError } from "typia";
+import { Bot, Context, Logger, Schema } from "koishi";
+import typia from "typia";
 
 export interface Config {
   path: string;
@@ -7,6 +7,7 @@ export interface Config {
 }
 
 export const name = "api-bots";
+const logger = new Logger(name);
 
 export const Config: Schema<Config> = Schema.object({
   path: Schema.string()
@@ -15,8 +16,8 @@ export const Config: Schema<Config> = Schema.object({
   limit: Schema.array(String).description("限制能访问该 API 的 UID。"),
 });
 
-export function apply(ctx: Context, config: Config) {
-  const path = ctx.api.config.path + config.path;
+export function apply(ctx: Context, config: Config, basePath: string) {
+  const path = basePath + config.path;
 
   if (config.limit.length != 0) {
     ctx.router.use(path, (ctx, next) => {
@@ -80,6 +81,8 @@ export function apply(ctx: Context, config: Config) {
       await bot.sendMessage(data.channelId, data.content, data.guildId);
     } else await bot.sendPrivateMessage(data.channelId, data.content);
   });
+
+  logger.info("Bots Routers init successfully.");
 }
 
 interface IMessageSender {
