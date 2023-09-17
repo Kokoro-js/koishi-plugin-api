@@ -39,8 +39,6 @@ export class API extends Service {
   ) {
     super(ctx, "api");
 
-    if (config.botsAPI.enabled) ctx.plugin(botsAPI, config.botsAPI);
-
     ctx.command("testAPI <uid:string>").action(async (_, uid) => {
       uid = uid || Object.keys(config.tokens)[0];
       const timestamp = Date.now();
@@ -67,6 +65,8 @@ export class API extends Service {
       ctx.response.status = 200;
       ctx.body = "Good!";
     });
+
+    if (config.botsAPI.enabled) ctx.plugin(botsAPI, config.botsAPI);
   }
 
   async start() {
