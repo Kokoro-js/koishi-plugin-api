@@ -111,7 +111,7 @@ export class API extends Service {
     const acceptableTimeDifferent = this.config.timeDifferent * Time.second;
 
     if (!(sign && random && timestamp)) {
-      ctx.request.status = 401;
+      ctx.response.status = 401;
       ctx.body = "Missing necessary parameters.";
       return;
     }
@@ -120,7 +120,7 @@ export class API extends Service {
     const timeDifference = Math.abs(serverTimestamp - timestamp);
 
     if (random.length > 36 || this.cacheRandomSet.has(random)) {
-      ctx.request.status = 401;
+      ctx.response.status = 401;
       ctx.body =
         "The random number already exists on the server side, please sign again.";
       return;
@@ -128,7 +128,7 @@ export class API extends Service {
     this.addRandom(random);
 
     if (timeDifference >= acceptableTimeDifferent) {
-      ctx.request.status = 401;
+      ctx.response.status = 401;
       ctx.body =
         "The timestamp being transmitted does not match the server's, please correct the time.";
       return;
@@ -139,7 +139,7 @@ export class API extends Service {
     logger.info(expect, sign);
 
     if (expect !== sign) {
-      ctx.request.status = 403;
+      ctx.response.status = 403;
       ctx.body = "Failed to verify your access.";
       return;
     }
