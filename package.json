@@ -1,5 +1,5 @@
 {
-  "name": "koishi-plugin-api",
+  "name": "koishi-plugin-messenger-api",
   "description": "Expose an API with Koishi to make various requests.",
   "version": "0.0.1",
   "main": "lib/index.js",

@@ -11,7 +11,7 @@ import {
 import { randomUUID, createCipheriv } from "crypto";
 import * as botsAPI from "./routers/bots";
 
-export const name = "api";
+export const name = "messenger-api";
 const logger = new Logger(name);
 
 declare module "koishi" {
