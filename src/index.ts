@@ -65,7 +65,7 @@ export class API extends Service {
     newRouter.use(this.tokenValidationMiddleware);
     if (config.enable) newRouter.use(this.dataDecryptMiddleware);
 
-    newRouter["get"]("/", (ctx, _next) => {
+    newRouter["all"]("/", (ctx, _next) => {
       ctx.response.status = 200;
       ctx.body = "Good!";
     });
@@ -102,7 +102,6 @@ export class API extends Service {
       this.hmacArray.set(key, hmac);
     }
 
-    logger.info(this.config);
     if (this.config.botsAPI?.enabled) {
       const botsPlugin = this.ctx.plugin(botsAPI, this.config.botsAPI);
       const config = botsPlugin.config;
@@ -121,6 +120,7 @@ export class API extends Service {
       (layer) => layer.name !== this.layerName,
     );
   }
+
   tokenValidationMiddleware = (ctx: any, next: any) => {
     const headers = ctx.request.headers;
     const sign = headers["sign"] as string;
@@ -155,8 +155,6 @@ export class API extends Service {
     }
 
     const expect = this.signAPI(timestamp, random, uid);
-
-    logger.info(expect, sign);
 
     if (expect !== sign) {
       ctx.response.status = 403;

@@ -1,4 +1,4 @@
-import { Bot, Context, Logger, Schema } from "koishi";
+import { Bot, Context, h, Logger, Schema } from "koishi";
 import Router from "@koa/router";
 
 export interface Config {
@@ -45,17 +45,17 @@ export function apply(ctx: Context, config: Config) {
       rctx.body = `Can not find bot with sid ${selfId}`;
       return;
     }
-    logger.info(bot);
-    rctx.bot = bot;
+
+    rctx.state.bot = bot;
     return next();
   });
 
   newRouter["get"]("/:sid", async (rctx, _next) => {
-    const bot: Bot = rctx.bot;
+    const bot: Bot = rctx.state.bot;
     const guildList = await bot.getGuildList();
     const joinedGuilds = guildList.map((guild) => guild.guildId);
 
-    const data = {
+    rctx.body = {
       selfId: bot.selfId,
       platform: bot.platform,
       status: bot.status,
@@ -63,32 +63,93 @@ export function apply(ctx: Context, config: Config) {
       userId: bot.userId,
       joinedGuilds,
     };
-    rctx.body = data;
   });
 
-  newRouter["post"]("/:sid" + "/message", async (rctx, _next) => {
-    const data: IMessageSender = rctx.request.body;
-    const bot: Bot = rctx.bot;
+  newRouter["get"]("/:sid/message", (context, next) => {
+    const data: IBaseMessage = context.request.body;
+    const bot: Bot = context.state.bot;
+
+    context.state.content = h.parse(data.content);
+    return next();
+  });
+
+  newRouter["post"]("/:sid/message", (context, next) => {
+    const data: IBaseMessage = context.request.body;
 
     if (!data.channelId) {
-      rctx.response.status = 401;
-      rctx.response.body = "Need channelId to send message.";
+      context.response.status = 401;
+      context.response.body = "Need channelId to send message.";
+      return;
     }
 
-    if (data.guildId) {
-      await bot.sendMessage(data.channelId, data.content, data.guildId);
-    } else await bot.sendPrivateMessage(data.channelId, data.content);
+    if (!data.content) {
+      context.response.status = 401;
+      context.response.body = "Need content to send message.";
+      return;
+    }
+
+    context.state.content = h.parse(data.content);
+    return next();
+  });
+
+  newRouter["post"]("/:sid" + "/message/create", async (rctx, _next) => {
+    const data: IMessageSender = rctx.request.body;
+    const bot: Bot = rctx.state.bot;
+    const content = rctx.state.content;
+
+    const channelIds = data.channelId;
+    let messageId: string[];
+
+    if (typeof channelIds === "string") {
+      if (data.guildId) {
+        messageId = await bot.sendMessage(channelIds, content, data.guildId);
+      } else messageId = await bot.sendPrivateMessage(channelIds, content);
+    } else {
+      messageId = await bot.broadcast(channelIds, content);
+    }
 
     rctx.response.status = 200;
-    rctx.body = `Send message successfully on channel ${data.channelId}`;
+    rctx.body = {
+      messageId,
+      message: `Send message successfully on channel ${channelIds}`,
+    };
+  });
+
+  newRouter["post"]("/:sid" + "/message/update", async (rctx, _next) => {
+    const data: IMessageUpdate = rctx.request.body;
+    const bot: Bot = rctx.state.bot;
+    const content = rctx.state.content;
+
+    await bot.editMessage(data.channelId, data.messageId, content);
+
+    rctx.response.status = 200;
+    rctx.body = `Update message ${data.messageId} successfully on channel ${data.channelId}`;
+  });
+
+  newRouter["post"]("/:sid" + "/message/delete", async (rctx, _next) => {
+    const data: IMessageUpdate = rctx.request.body;
+    const bot: Bot = rctx.state.bot;
+
+    await bot.deleteMessage(data.channelId, data.messageId);
+
+    rctx.response.status = 200;
+    rctx.body = `Update message ${data.messageId} successfully on channel ${data.channelId}`;
   });
 
   config.router = newRouter;
   logger.info("Bots Routers init successfully.");
 }
 
-interface IMessageSender {
-  guildId?: string;
+interface IBaseMessage {
   channelId: string;
   content: string;
+}
+interface IMessageSender {
+  channelId: string | string[];
+  guildId?: string;
+  content: string;
+}
+
+interface IMessageUpdate extends IBaseMessage {
+  messageId: string;
 }
