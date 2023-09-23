@@ -26,7 +26,7 @@ export function apply(ctx: Context, config: Config) {
     newRouter.use((ctx, next) => {
       const uid = ctx.headers["uid"] as string;
       if (config.limit.includes(uid)) {
-        return next;
+        return next();
       }
       ctx.response.status = 403;
       ctx.response.body = "You are not allowed to access this path.";
