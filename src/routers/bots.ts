@@ -65,15 +65,7 @@ export function apply(ctx: Context, config: Config) {
     };
   });
 
-  newRouter["get"]("/:sid/message", (context, next) => {
-    const data: IBaseMessage = context.request.body;
-    const bot: Bot = context.state.bot;
-
-    context.state.content = h.parse(data.content);
-    return next();
-  });
-
-  newRouter["post"]("/:sid/message", (context, next) => {
+  newRouter.use("/:sid/message", (context, next) => {
     const data: IBaseMessage = context.request.body;
 
     if (!data.channelId) {
@@ -81,29 +73,28 @@ export function apply(ctx: Context, config: Config) {
       context.response.body = "Need channelId to send message.";
       return;
     }
-
-    if (!data.content) {
-      context.response.status = 401;
-      context.response.body = "Need content to send message.";
-      return;
-    }
-
-    context.state.content = h.parse(data.content);
     return next();
   });
 
   newRouter["post"]("/:sid" + "/message/create", async (rctx, _next) => {
     const data: IMessageSender = rctx.request.body;
+    if (!data.content) {
+      rctx.response.status = 401;
+      rctx.response.body = "Need content to send message.";
+      return;
+    }
+
     const bot: Bot = rctx.state.bot;
-    const content = rctx.state.content;
+    const content = h.parse(data.content);
 
     const channelIds = data.channelId;
     let messageId: string[];
 
     if (typeof channelIds === "string") {
-      if (data.guildId) {
-        messageId = await bot.sendMessage(channelIds, content, data.guildId);
-      } else messageId = await bot.sendPrivateMessage(channelIds, content);
+      messageId = await bot.sendMessage(channelIds, content, data.guildId);
+      // if (data.guildId) {
+      //   messageId = await bot.sendMessage(channelIds, content, data.guildId);
+      // } else messageId = await bot.sendPrivateMessage(channelIds, content);
     } else {
       messageId = await bot.broadcast(channelIds, content);
     }
